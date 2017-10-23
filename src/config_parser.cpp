@@ -2,19 +2,21 @@
 
 #include "config_parser.h"
 
-Config::Config(string filename)
+const int __CONFIG_BUFFER_SIZE = 80;
+
+Config::Config(std::string filename)
 {
     if (FILE *file = fopen(filename.c_str(), "r"))
     {
-        char* buffer = new char[BUFFER_SIZE];
-        char* section_buffer = new char[BUFFER_SIZE];
-        char* config_buffer = new char[BUFFER_SIZE];
-        while (fgets(buffer, BUFFER_SIZE, file))
+        char* buffer = new char[__CONFIG_BUFFER_SIZE];
+        char* section_buffer = new char[__CONFIG_BUFFER_SIZE];
+        char* config_buffer = new char[__CONFIG_BUFFER_SIZE];
+        while (fgets(buffer, __CONFIG_BUFFER_SIZE, file))
         {
             switch(buffer[0])
             {
                 // Newlines and comments
-                case '\n': case '#': /* Ignore */ break;
+                case '\n': case '#': case ';': /* Ignore */ break;
                 // Section headers
                 case '[':
                     sscanf(buffer, "[%80[^]]]\n", section_buffer);
@@ -37,22 +39,24 @@ Config::Config(string filename)
     }
     else
     {
-        char err_msg[BUFFER_SIZE];
+        char err_msg[__CONFIG_BUFFER_SIZE];
         sprintf(err_msg, "File `%s` does not exist", filename.c_str());
-        throw invalid_argument(err_msg);
+        throw std::invalid_argument(err_msg);
     }
 }
 
-map<string, string> Config::get_section(string section_name)
+std::map<std::string, std::string>
+Config::get_section(std::string section_name)
 {
     return sections[section_name];
 }
 
-void Config::dump(FILE* log_file)
+void
+Config::dump(FILE* log_file)
 {
     // Set up iterators
-    std::map<std::string, string>::iterator itr1;
-    std::map<string, std::map<std::string, string> >::iterator itr2;
+    std::map<std::string, std::string>::iterator itr1;
+    std::map<std::string, std::map<std::string, std::string> >::iterator itr2;
     for(itr2 = sections.begin(); itr2 != sections.end(); itr2++)
     {
         fprintf(log_file, "[%s]\n", itr2->first.c_str());
