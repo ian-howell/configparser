@@ -4,7 +4,7 @@ CXX = /usr/bin/g++
 CXXFLAGS = -g -Wall -w -pedantic-errors -Wextra -Wconversion -std=c++11
 
 SOURCES = $(wildcard src/*.cpp)
-HEADERS = $(wildcard *.h)
+HEADERS = $(wildcard src/*.h)
 
 OBJECTS = $(SOURCES:%.cpp=%.o)
 
