@@ -42,7 +42,7 @@ Config::Config(std::string filename)
     }
     else
     {
-        throw std::invalid_argument("File `" + filename + "` does not exist");
+        throw std::runtime_error("File `" + filename + "` does not exist");
     }
 }
 
@@ -69,7 +69,7 @@ void Config::dump(FILE* log_file)
 std::string Config::read_header(const std::string& line)
 {
     if (line[line.size() - 1] != ']')
-        throw std::invalid_argument("Invalid section header: `" + line + "`");
+        throw std::runtime_error("Invalid section header: `" + line + "`");
     return trim_copy(line.substr(1, line.size() - 2));
 }
 
@@ -78,13 +78,13 @@ void Config::read_configuration(const std::string& line, const std::string& head
     if (header == "")
     {
         std::string error = "No section provided for: `" + line + "`";
-        throw std::invalid_argument(error);
+        throw std::runtime_error(error);
     }
 
     if (line.find('=') == std::string::npos)
     {
         std::string error = "Invalid configuration: `" + line + "`";
-        throw std::invalid_argument(error);
+        throw std::runtime_error(error);
     }
 
     std::istringstream iss(line);
@@ -95,7 +95,7 @@ void Config::read_configuration(const std::string& line, const std::string& head
     if (key.size()== 0)
     {
         std::string error = "No key found in configuration: `" + line + "`";
-        throw std::invalid_argument(error);
+        throw std::runtime_error(error);
     }
 
     std::getline(iss, val);
