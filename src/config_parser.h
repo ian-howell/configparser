@@ -12,14 +12,16 @@ class Config
     public:
         Config(std::string filename);
 
-        std::map<std::string, std::string>
-        get_section(std::string section_name);
+        std::map<std::string, std::string> get_section(std::string section_name);
 
-        void
-        dump(FILE* log_file);
+        void dump(FILE* log_file);
 
     private:
         std::map<std::string, std::map<std::string, std::string> > sections;
+
+        std::string read_header(const std::string& line);
+
+        void read_configuration(const std::string& line, const std::string& header);
 
         // trim from start (in place)
         void ltrim(std::string &s);

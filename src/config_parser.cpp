@@ -1,61 +1,107 @@
 #include <algorithm>
 #include <cctype>
 #include <fstream>
+#include <iostream>
+#include <sstream>
 #include <string>
 
 #include "config_parser.h"
 
-const int __CONFIG_BUFFER_SIZE = 80;
-
 Config::Config(std::string filename)
 {
-    if (FILE *file = fopen(filename.c_str(), "r"))
+    std::ifstream fin(filename);
+
+    if (fin.good())
     {
-        char* buffer = new char[__CONFIG_BUFFER_SIZE];
-        char* section_buffer = new char[__CONFIG_BUFFER_SIZE];
-        char* config_buffer = new char[__CONFIG_BUFFER_SIZE];
-        while (fgets(buffer, __CONFIG_BUFFER_SIZE, file))
+        std::string line;
+        std::string current_header = "";
+        while (std::getline(fin, line))
         {
-            switch(buffer[0])
+            trim(line);
+
+            // Skip empty lines
+            if (line.size() == 0)
+                continue;
+
+            switch (line[0])
             {
-                // Newlines and comments
-                case '\n': case '#': case ';': /* Ignore */ break;
-                // Section headers
-                case '[':
-                    sscanf(buffer, "[%80[^]]]\n", section_buffer);
+                case '#':
+                case ';':
+                    // Ignore comments
                     break;
-                // Everything else will be configurations
+                case '[':
+                    // Section header
+                    current_header = read_header(line);
+                    break;
                 default:
-                    // Horrible pointer black magic
-                    sscanf(buffer, "%s\n", config_buffer);
-                    char* equal_pos = strchr(config_buffer, '=');
-                    *equal_pos = '\0';
-                    sections[section_buffer][config_buffer] = (equal_pos+1);
+                    // Everything else will be configurations
+                    read_configuration(line, current_header);
             }
         }
-
-        // Clean up
-        delete [] buffer;
-        delete [] section_buffer;
-        delete [] config_buffer;
-        fclose(file);
+        fin.close();
     }
     else
     {
-        char err_msg[__CONFIG_BUFFER_SIZE];
-        sprintf(err_msg, "File `%s` does not exist", filename.c_str());
-        throw std::invalid_argument(err_msg);
+        throw std::invalid_argument("File `" + filename + "` does not exist");
     }
 }
 
-std::map<std::string, std::string>
-Config::get_section(std::string section_name)
+std::map<std::string, std::string> Config::get_section(std::string section_name)
 {
     return sections[section_name];
 }
 
-void
-Config::dump(FILE* log_file)
+void Config::dump(FILE* log_file)
+{
+    // Set up iterators
+    std::map<std::string, std::string>::iterator itr1;
+    std::map<std::string, std::map<std::string, std::string> >::iterator itr2;
+    for(itr2 = sections.begin(); itr2 != sections.end(); itr2++)
+    {
+        fprintf(log_file, "[%s]\n", itr2->first.c_str());
+        for(itr1 = itr2->second.begin(); itr1 != itr2->second.end(); itr1++)
+        {
+            fprintf(log_file, "%s=%s\n", itr1->first.c_str(), itr1->second.c_str());
+        }
+    }
+}
+
+std::string Config::read_header(const std::string& line)
+{
+    if (line[line.size() - 1] != ']')
+        throw std::invalid_argument("Invalid section header: `" + line + "`");
+    return trim_copy(line.substr(1, line.size() - 2));
+}
+
+void Config::read_configuration(const std::string& line, const std::string& header)
+{
+    if (header == "")
+    {
+        std::string error = "No section provided for: `" + line + "`";
+        throw std::invalid_argument(error);
+    }
+
+    if (line.find('=') == std::string::npos)
+    {
+        std::string error = "Invalid configuration: `" + line + "`";
+        throw std::invalid_argument(error);
+    }
+
+    std::istringstream iss(line);
+    std::string key;
+    std::string val;
+    std::getline(iss, key, '=');
+
+    if (key.size()== 0)
+    {
+        std::string error = "No key found in configuration: `" + line + "`";
+        throw std::invalid_argument(error);
+    }
+
+    std::getline(iss, val);
+
+    sections[header][trim_copy(key)] = trim_copy(val);
+}
 
 // trim from start (in place)
 void Config::ltrim(std::string &s)

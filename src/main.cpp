@@ -1,4 +1,5 @@
 #include <iostream>
+#include <string>
 
 #include "config_parser.h"
 
