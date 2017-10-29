@@ -7,12 +7,16 @@ SOURCES = $(wildcard src/*.cpp)
 HEADERS = $(wildcard src/*.h)
 
 OBJECTS = $(SOURCES:%.cpp=%.o)
+DEPS := $(OBJECTS:%.o=%.d)
+
 
 default: driver
 
+-include $(DEPS)
+
 %.o: %.cpp
 	@echo "Compiling $<"
-	@$(CXX) $(CXXFLAGS) -c $< -o $@
+	@$(CXX) -c $(CXXFLAGS) -MMD -o $@ $<
 
 driver: $(OBJECTS)
 	@echo "Building $@"
@@ -26,11 +30,4 @@ clean:
 	-@rm -f driver
 	-@rm -f "depend"
 	-@rm -f $(OBJECTS)
-
-# Automatically generate dependencies and include them in Makefile
-depend: $(SOURCES) $(HEADERS)
-	@echo "Generating dependencies"
-	@$(CXX) -std=c++11 -MM $(SOURCES) > $@
-
-
--include depend
+	-@rm -f $(DEPS)
