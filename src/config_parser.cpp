@@ -46,9 +46,19 @@ Config::Config(std::string filename)
     }
 }
 
-std::map<std::string, std::string> Config::get_section(std::string section_name)
+std::map<std::string, std::string> Config::get_section(const std::string& section_name)
 {
-    return sections[section_name];
+    if (sections.count(section_name) == 0)
+    {
+        std::string error = "No such key: `" + section_name + "`";
+        throw std::out_of_range(error);
+    }
+    return sections.at(section_name);
+}
+
+std::map<std::string, std::string> Config::operator[](const std::string& section_name)
+{
+    return get_section(section_name);
 }
 
 void Config::dump(FILE* log_file)

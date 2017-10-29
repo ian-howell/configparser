@@ -12,7 +12,9 @@ class Config
     public:
         Config(std::string filename);
 
-        std::map<std::string, std::string> get_section(std::string section_name);
+        std::map<std::string, std::string> get_section(const std::string& section_name);
+
+        std::map<std::string, std::string> operator[](const std::string& section_name);
 
         void dump(FILE* log_file);
 
